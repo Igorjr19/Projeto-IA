@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -248,18 +249,40 @@ public class TelaInicial extends javax.swing.JFrame {
 
     private void jButtonHeuristica1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonHeuristica1ActionPerformed
         // TODO add your handling code here:
+        int limite = 1000;
+        int movimentos = tabuleiro.buscaHeuristica1Nivel(limite);
+        if (movimentos >= 0) {
+            atualizarTabela();
+            JOptionPane.showMessageDialog(rootPane, "Jogo solucionado com " + movimentos + " movimentos, utilizando a busca heurística em 1 nível!", "Jogo Solucionado", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            atualizarTabela();
+            JOptionPane.showMessageDialog(rootPane, "Número de movimentos para solucionar o jogo excedido!", "Solução Não Encontrada", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_jButtonHeuristica1ActionPerformed
 
     private void jButtonEmbaralharActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonEmbaralharActionPerformed
         // TODO add your handling code here:
-        int n = Integer.parseInt(jFormattedTextFieldEmbaralhamentos.getText());
-        tabuleiro.embaralharTabuleiro(n);
-        atualizarTabela();
-        renderizarTabela();
+        try {
+            int n = Integer.parseInt(jFormattedTextFieldEmbaralhamentos.getText());
+            tabuleiro.embaralharTabuleiro(n);
+            atualizarTabela();
+            renderizarTabela();
+        } catch (Exception e) {
+            return;
+        }
     }//GEN-LAST:event_jButtonEmbaralharActionPerformed
 
     private void jButtonAleatoriaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAleatoriaActionPerformed
         // TODO add your handling code here:
+        int limite = 1000000;
+        int movimentos = tabuleiro.buscaAleatoria(limite);
+        if (movimentos >= 0) {
+            atualizarTabela();
+            JOptionPane.showMessageDialog(rootPane, "Jogo solucionado com " + movimentos + " movimentos, utilizando a busca aleatória!", "Jogo Solucionado", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            atualizarTabela();
+            JOptionPane.showMessageDialog(rootPane, "Número de movimentos para solucionar o jogo excedido!", "Solução Não Encontrada", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_jButtonAleatoriaActionPerformed
 
     /**
