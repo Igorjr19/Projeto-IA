@@ -1,7 +1,9 @@
 Model\Tabuleiro.class
 View\TelaInicial$3.class
-View\TelaInicial$5.class
+Main\Puzzle$1.class
 View\TelaInicial.class
+Main\Puzzle.class
 View\TelaInicial$1.class
 View\TelaInicial$4.class
 View\TelaInicial$2.class
+Model\Movimento.class

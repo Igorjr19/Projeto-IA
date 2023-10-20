@@ -10,20 +10,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Igor Rodrigues e Lucas Ikeda
  */
 public class Tabuleiro {
-
-    /**
-     * *** Atributos ****
-     */
     private int[][] casas;
     private int linhaLivre;
     private int colunaLivre;
 
-    /**
-     * *** Construtor ****
-     */
-    /**
-     * Instancia um novo Tabuleiro
-     */
     public Tabuleiro() {
         this.casas = new int[3][3];
 
@@ -39,9 +29,6 @@ public class Tabuleiro {
         }
     }
 
-    /**
-     * *** Getters ****
-     */
     public int[][] getCasas() {
         return casas;
     }
@@ -54,9 +41,6 @@ public class Tabuleiro {
         return colunaLivre;
     }
 
-    /**
-     * *** Métodos ****
-     */
     /**
      * Verifica se o tabuleiro está posicionado de acordo com a condição de
      * vitória do jogo
@@ -79,23 +63,14 @@ public class Tabuleiro {
         return true;
     }
 
-    /**
-     * Calcula as casas que podem ocupar o espaço livre
-     *
-     * @return um array contendo um array cujo indíce 0 é a linha da casa e o
-     * índice 1 é a coluna da casa, o array será igual a null caso não seja uma
-     * casa válida do tabuleiro
-     */
-    public int[][] movimentosDisponiveis() {
+    public ArrayList<Movimento> movimentosDisponiveis() {
         int pos[][] = {{0, -1}, {-1, 0}, {0, 1}, {1, 0}};
-
-        int[][] movimentos;
-        movimentos = new int[4][2];
+        ArrayList<Movimento> movimentos = new ArrayList();
         for (int i = 0; i < 4; i++) {
-            movimentos[i][0] = linhaLivre + pos[i][0];
-            movimentos[i][1] = colunaLivre + pos[i][1];
-            if (movimentos[i][1] > 2 || movimentos[i][0] > 2 || movimentos[i][1] < 0 || movimentos[i][0] < 0) {
-                movimentos[i] = null;
+            int movLinha = linhaLivre + pos[i][0];
+            int movColuna = colunaLivre + pos[i][1];
+            if (movLinha >= 0 && movLinha <= 2  && movColuna >= 0 && movColuna <= 2) {
+                movimentos.add(new Movimento(movLinha, movColuna));
             }
         }
         return movimentos;
@@ -137,40 +112,24 @@ public class Tabuleiro {
             matrizOriginal[i] = (int[]) Arrays.copyOf(casas[i], 3);
         }
         int[][][] matriz = new int[4][3][3];
-        int[][] movimentosDispo = movimentosDisponiveis();
-        for (int i = 0; i < 4; i++) {
-            if (movimentosDispo[i] == null) {
-                matriz[i] = null;
-            } else {
-                matriz[i] = movimentarMatriz(matrizOriginal, movimentosDispo[i][0], movimentosDispo[i][1], linhaLivre, colunaLivre);
-            }
+        ArrayList<Movimento> movimentosDispo = movimentosDisponiveis();
+        int i = 0;
+        for (Movimento movimento : movimentosDispo) {
+            matriz[i] = movimentarMatriz(matrizOriginal, movimentosDispo.get(i).linha, movimentosDispo.get(i).coluna, linhaLivre, colunaLivre);
         }
         return matriz;
     }
 
-    /**
-     *
-     * @param linha número da linha do tabuleiro da casa que vai ser movimentada
-     * @param coluna número da coluna do tabuleiro da casa que vai ser
-     * movimentada
-     * @return {@code true} caso seja possível realizar o movimento e
-     * {@code false} caso contrário
-     */
-    public boolean movimentarPeca(int linha, int coluna) {
+
+    public boolean movimentarPeca(Movimento movimento) {
+        int linha = movimento.linha;
+        int coluna = movimento.coluna;
         if (linha < 0 || linha > 2 || coluna < 0 || coluna > 2) {
             return false;
         }
-        int[][] movimentos = movimentosDisponiveis();
+        ArrayList<Movimento> movimentos = movimentosDisponiveis();
+        if(movimentos.contains(movimento));
         boolean aux = false;
-        for (int i = 0; i < 4; i++) {
-            if (movimentos[i] != null && linha == movimentos[i][0] & coluna == movimentos[i][1]) {
-                aux = true;
-                break;
-            }
-        }
-        if (aux == false) {
-            return false;
-        }
         casas[linhaLivre][colunaLivre] = casas[linha][coluna];
         casas[linha][coluna] = 0;
         linhaLivre = linha;
@@ -203,10 +162,10 @@ public class Tabuleiro {
      */
     public void embaralharTabuleiro(int n) {
         for (int i = 0; i < n; i++) {
-            int movimentoAtual[] = null;
-            int[][] movimentos = movimentosDisponiveis();
-            int pos = ThreadLocalRandom.current().nextInt(0, 3 + 1);
-            movimentoAtual = movimentos[pos];
+            Movimento movimentoAtual = null;
+            ArrayList<Movimento> movimentos = movimentosDisponiveis();
+            int pos = ThreadLocalRandom.current().nextInt(0, movimentos.size());
+            movimentoAtual = movimentos.get(pos);
             while (movimentoAtual == null) {
                 pos += 1;
                 if (pos > 3) {
@@ -215,9 +174,9 @@ public class Tabuleiro {
                 if (pos < 0) {
                     pos = 2;
                 }
-                movimentoAtual = movimentos[pos];
+                movimentoAtual = movimentos.get(pos);
             }
-            movimentarPeca(movimentoAtual[0], movimentoAtual[1]);
+            movimentarPeca(movimentoAtual);
         }
     }
 
@@ -243,7 +202,7 @@ public class Tabuleiro {
     }
 
     
-    public Double verificarHeuristica(int[][] matriz) {
+    public Double verificarHeuristica(int[][] matriz, int linha, int coluna) {
         if (matriz == null) {
             return Double.MAX_VALUE;
         }
@@ -251,71 +210,94 @@ public class Tabuleiro {
         int casa = 1;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                if (i == 2 && j == 2) {
-                    break;
+                if (i == linha && j == coluna) {
+                    continue;
                 }
-                val += Math.sqrt(Math.pow((casa - matriz[i][j]), 2));
+                val += Math.sqrt(Math.pow((matriz[i][j] - casa), 2));
                 casa++;
             }
         }
         return val;
     }
 
+    public int[][] copiarTabuleiro(){
+        int[][] tabuleiroAtual = new int[3][];
+        for (int i = 0; i < 3; i++) {
+            tabuleiroAtual[i] = (int[]) Arrays.copyOf(casas[i], 3);
+        }
+        return tabuleiroAtual;  
+    }
+    
+    public boolean verificaIgual(int[][] matriz) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (casas[i][j] != matriz[i][j]){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
     public int buscaHeuristica1Nivel(int limite) {
-        ArrayList<Integer[]> movimentos = new ArrayList();
         int nMovimentos = 0;
-        ArrayList<int[][]> movimentosAlternativos = new ArrayList();
+        
+        ArrayList<int[][]> tabuleiroAnterior = new ArrayList();
+        ArrayList<Integer> indexAnterior = new ArrayList();
+        ArrayList<ArrayList<Movimento>> ultimosMovimentos = new ArrayList();
+        int evitaLoop = -1;
         while (nMovimentos < limite) {
+            // Condição de Parada
             if (verificarVitoria()) {
                 return nMovimentos;
             }
             
-            int[][] movimentosPossiveis = movimentosDisponiveis();
-            int[][][] matrizMovimentosDispo = matrizMovimentosDisponiveis();
-            Double valorAtualHeuristica = Double.MAX_VALUE;
-            Double valorProximaHeuristica = Double.MAX_VALUE;
-            Double valorAlternativoHeuristica = Double.MAX_VALUE;
-            Integer[] movimento = new Integer[2];
-            
-            // Vetor para verificação de loop
-            if (movimentos.size() > 3) {
-                movimentos.remove(0);
-            }
-            
-            movimentosPossiveis = movimentosDisponiveis();
-            valorAtualHeuristica = verificarHeuristica(matrizMovimentosDispo[0]);
+            // Verificar Heuristica
+            Double heuristicaAtual, heuristicaProx;
+            ArrayList<Movimento> movimentosDispo = movimentosDisponiveis();
+            int[][][] matrizMovimentos = matrizMovimentosDisponiveis();
             int index = 0;
-            for (int i = 1; i < 4; i++) {
-                if (movimentosPossiveis[i] == null) {
-                    continue;
-                }
-                valorProximaHeuristica = verificarHeuristica(matrizMovimentosDispo[i]);
-                if (valorAtualHeuristica > valorProximaHeuristica) {
-                    valorAtualHeuristica = valorProximaHeuristica;
+            ultimosMovimentos.add(movimentosDispo);
+            while(matrizMovimentos[index] == null){
+                index++;
+            }
+            heuristicaAtual = verificarHeuristica(matrizMovimentos[index], movimentosDispo.get(index).linha, movimentosDispo.get(index).coluna);           
+            int i = index;
+            while (i < movimentosDispo.size()) {                
+                if(matrizMovimentos[i] == null) continue;
+                heuristicaProx = verificarHeuristica(matrizMovimentos[i], movimentosDispo.get(i).linha, movimentosDispo.get(i).coluna);
+                if(heuristicaAtual > heuristicaProx && !movimentosDispo.get(i).verificado) {
+                    heuristicaAtual = heuristicaProx;
                     index = i;
+                    evitaLoop = -1;
+                    movimentosDispo.get(i).verificado = true;
                 }
-                
+                i++;
             }
             
-            // Verficar Loop
+            //Verificar Loop
             boolean loop = false;
-            int loopIndex = -1;
-            for (int j = 0; j < 3 && movimentos.size() > 3; j++) {
-                if (movimentosPossiveis[index][0] == movimentos.get(j)[0] && movimentosPossiveis[index][1] == movimentos.get(j)[1]) {
+            int indLoop = -1;
+            
+            for (int[][] mat : matrizMovimentos) {
+                if(mat != null && verificaIgual(mat)) {
                     loop = true;
-                    loopIndex = j;
+                    indLoop++;
                 }
             }
-            if (loop) {
-                casas = movimentosAlternativos.get(movimentosAlternativos.size() - (loopIndex + 1));
+            if(loop) {
+                evitaLoop = indexAnterior.get(indLoop);
+                nMovimentos++;
                 continue;
             }
-            movimentarPeca(movimentosPossiveis[index][0], movimentosPossiveis[index][1]);
-            imprimirTabuleiro();
+            
+            
+            //Movimentar
+            int[][] tabuleiroAtual = copiarTabuleiro();
+            tabuleiroAnterior.add(tabuleiroAtual);
+            indexAnterior.add(index);
+            movimentarPeca(movimentosDispo.get(index));
             nMovimentos++;
-            movimento[0] = movimentosPossiveis[index][0];
-            movimento[1] = movimentosPossiveis[index][1];
-            movimentos.add(movimento);
         }
         return -1;
     }
